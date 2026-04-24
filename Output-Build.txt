@@ -1,0 +1,66 @@
+﻿------ Build started: Project: ClearCore, Configuration: Debug ARM ------
+Build started.
+Project "ClearCore.cppproj" (default targets):
+Target "PreBuildEvent" skipped, due to false condition; ('$(PreBuildEvent)'!='') was evaluated as (''!='').
+Target "CoreBuild" in file "C:\Program Files (x86)\Atmel\Studio\7.0\Vs\Compiler.targets" from project "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\libClearCore\ClearCore.cppproj" (target "Build" depends on it):
+	Task "RunCompilerTask"
+		Shell Utils Path C:\Program Files (x86)\Atmel\Studio\7.0\shellUtils
+		C:\Program Files (x86)\Atmel\Studio\7.0\shellUtils\make.exe all --jobs 16 --output-sync 
+		make: Nothing to be done for 'all'.
+	Done executing task "RunCompilerTask".
+	Task "RunOutputFileVerifyTask"
+	Done executing task "RunOutputFileVerifyTask".
+Done building target "CoreBuild" in project "ClearCore.cppproj".
+Target "PostBuildEvent" skipped, due to false condition; ('$(PostBuildEvent)' != '') was evaluated as ('' != '').
+Target "Build" in file "C:\Program Files (x86)\Atmel\Studio\7.0\Vs\Avr.common.targets" from project "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\libClearCore\ClearCore.cppproj" (entry point):
+Done building target "Build" in project "ClearCore.cppproj".
+Done building project "ClearCore.cppproj".
+
+Build succeeded.
+------ Build started: Project: LwIP, Configuration: Debug ARM ------
+Build started.
+Project "LwIP.cppproj" (default targets):
+Target "PreBuildEvent" skipped, due to false condition; ('$(PreBuildEvent)'!='') was evaluated as (''!='').
+Target "CoreBuild" in file "C:\Program Files (x86)\Atmel\Studio\7.0\Vs\Compiler.targets" from project "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\LwIP\LwIP.cppproj" (target "Build" depends on it):
+	Task "RunCompilerTask"
+		Shell Utils Path C:\Program Files (x86)\Atmel\Studio\7.0\shellUtils
+		C:\Program Files (x86)\Atmel\Studio\7.0\shellUtils\make.exe all --jobs 16 --output-sync 
+		make: Nothing to be done for 'all'.
+	Done executing task "RunCompilerTask".
+	Task "RunOutputFileVerifyTask"
+	Done executing task "RunOutputFileVerifyTask".
+Done building target "CoreBuild" in project "LwIP.cppproj".
+Target "PostBuildEvent" skipped, due to false condition; ('$(PostBuildEvent)' != '') was evaluated as ('' != '').
+Target "Build" in file "C:\Program Files (x86)\Atmel\Studio\7.0\Vs\Avr.common.targets" from project "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\LwIP\LwIP.cppproj" (entry point):
+Done building target "Build" in project "LwIP.cppproj".
+Done building project "LwIP.cppproj".
+
+Build succeeded.
+------ Build started: Project: Elevator, Configuration: Debug ARM ------
+Build started.
+Project "Elevator.cppproj" (default targets):
+Target "PreBuildEvent" skipped, due to false condition; ('$(PreBuildEvent)'!='') was evaluated as (''!='').
+Target "CoreBuild" in file "C:\Program Files (x86)\Atmel\Studio\7.0\Vs\Compiler.targets" from project "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\Elevator_2\Elevator.cppproj" (target "Build" depends on it):
+	Task "RunCompilerTask"
+		Shell Utils Path C:\Program Files (x86)\Atmel\Studio\7.0\shellUtils
+		C:\Program Files (x86)\Atmel\Studio\7.0\shellUtils\make.exe all --jobs 16 --output-sync 
+		make: Nothing to be done for 'all'.
+	Done executing task "RunCompilerTask".
+	Task "RunOutputFileVerifyTask"
+				Program Memory Usage 	:	135716 bytes   25.9 % Full
+				Data Memory Usage 		:	9116 bytes   4.5 % Full
+				Warning: Memory Usage estimation may not be accurate if there are sections other than .text sections in ELF file
+	Done executing task "RunOutputFileVerifyTask".
+Done building target "CoreBuild" in project "Elevator.cppproj".
+Target "PostBuildEvent" in file "C:\Program Files (x86)\Atmel\Studio\7.0\Vs\Avr.common.targets" from project "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\Elevator_2\Elevator.cppproj" (target "Build" depends on it):
+	Task "Exec"
+		"C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\Elevator_2\\..\Tools\uf2-builder\Release\uf2-builder.exe" "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\Elevator_2\Debug\Elevator.bin" "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\Elevator_2\Debug\Elevator.uf2"
+		Wrote 531 blocks to C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\Elevator_2\Debug\Elevator.uf2
+	Done executing task "Exec".
+Done building target "PostBuildEvent" in project "Elevator.cppproj".
+Target "Build" in file "C:\Program Files (x86)\Atmel\Studio\7.0\Vs\Avr.common.targets" from project "C:\Program Files (x86)\Teknic\ClearCore-Library 1.7\Elevator_2\Elevator.cppproj" (entry point):
+Done building target "Build" in project "Elevator.cppproj".
+Done building project "Elevator.cppproj".
+
+Build succeeded.
+========== Build: 3 succeeded or up-to-date, 0 failed, 0 skipped ==========
