@@ -1,4 +1,5 @@
-# ProjectTemplate
+This project base on hardware from Teknic and their ClearCore controller is meant to manage a custom built residential elevator system.
 
-This repository contains a basic ClearCore project that can be used as a template for new application development.
-Place this repository rooted in the same parent directory as libClearCore and LwIP to properly find include files and libraries.
+The code is based on a Hierarchical State Machine (HSM) pattern to manage the relative and coordinated motions of the cab and 2 independent guillotine-style doors.
+
+The IDE used is Microchip Studio with exteded ClearCore libraries
