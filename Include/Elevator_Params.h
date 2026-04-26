@@ -10,31 +10,68 @@
 #define ELEVATOR_PARAMS_H_
 
 //Building structure parameters:
-float cabOnBottom =	0;					//baseline reference when cab is resting on bottom, measured from floor surface
-float cabHomeInches = 0.2;				//offset from bottom to cab home height in inches
+//float cabOnBottom =	0;					//baseline reference when cab is resting on bottom, measured from floor surface
+/*
+float cabHomeInches = 0;				//offset from bottom to cab home height in inches
 float basementLevelInches =	4;			//offset from home to basement level in inches
 float garageLevelInches = 81.4375;		//offset from home to garage level in inches
 float mainLevelInches = 120.3125;		//offset from home to main level in inches
 float apartmentLevelInches = 230.375;	//offset from home to apartment level in inches
+*/
+enum DoorDirection { UP, DOWN };
+enum DoorID { DOOR_X, DOOR_Y };
+	
+struct Floor {
+	const char* name;
+	double height;
+	DoorID activeDoor;
+	DoorDirection direction;
+	bool requiresApproach; // True ONLY for Basement and Garage
+};
 
+// Extern tells the compiler the array is defined elsewhere (in the .cpp)
+extern Floor floors[4];
+
+
+//Design parameters in inches:
+float cabXHeight = 84;
+float cabYHeight = 84;
+float doorXHeight = 90.125;
+float doorYHeight = 90.125;
+float doorCloseOffset = 4.25;
 
 //Mechanical system parameters:
 
-//Main hoist system:
-//motor:	ClearPath P/N: CPM-SDHPN1433P-ELN
-uint16_t M0CountsPerRev = 6400;		//encoder counts per revolution for M0
-uint16_t M0GearRatio = 60;			//gear-down ratio of main hoist gearbox
-float M0ChainPitch = 0.75;		//main hoist chain pitch in inches
-uint16_t M0DriveTeeth = 22;			//number of teeth on the hoist output drive sprockets
-float M0CountsPerInch = (float)M0CountsPerRev * M0GearRatio / M0DriveTeeth / M0ChainPitch;
+//Main hoist motor:	ClearPath P/N: CPM-SDHPN1433P-ELN
+uint16_t cabCountsPerRev = 6400;			//encoder counts per revolution for M0
+uint16_t cabGearRatio = 60;					//gear-down ratio of main hoist gearbox
+float cabChainPitch = 0.75;					//main hoist chain pitch in inches
+uint16_t cabDriveTeeth = 22;				//number of teeth on the hoist output drive sprockets
+uint32_t cabCountsPerInch = (float)cabCountsPerRev * cabGearRatio / cabDriveTeeth / cabChainPitch;	//23272.727
+uint32_t cabVelocityLimit_PPS = 160000;		//Slightly more than 400 IPM for the cab motor, gearbox, and sprocket
+uint32_t cabAcceleration_PPSS = 1350000;	//Equivalent to 58 inches/sec^2 or 1.5 m/sec^2 for the door drive system
 
-//Door drive system
-//motor:	ClearPath P/N: CPM-SDSK-3421S-RLN
-uint16_t M1CountsPerRev = 800;		//encoder counts per revolution for M1, M2
-uint16_t M1GearRatio = 10;			//gear-down ratio of door motor gearboxes
-float M1ChainPitch = 0.5;		//door drive chain pitch in inches
-uint16_t M1DriveTeeth = 17;			//number of teeth on the door output drive sprockets
-float M1CountsPerInch = (float)M1CountsPerRev * M1GearRatio / M1DriveTeeth / M1ChainPitch;
+//Door drive motors:	ClearPath P/N: CPM-SDSK-3421S-RLN
+uint16_t doorCountsPerRev = 800;			//encoder counts per revolution for M1, M2
+uint16_t doorGearRatio = 10;				//gear-down ratio of door motor gearboxes
+float doorChainPitch = 0.5;					//door drive chain pitch in inches
+uint16_t doorDriveTeeth = 17;				//number of teeth on the door output drive sprockets
+uint32_t doorCountsPerInch = (float)doorCountsPerRev * doorGearRatio / doorDriveTeeth / doorChainPitch;	//941.176
+uint32_t doorVelocityLimit_PPS = 6300;		//Slightly more than 400 IPM for the door motor, gearbox, and sprocket
+uint32_t doorAcceleration_PPSS = 54588;		//Equivalent to 58 inches/sec^2 or 1.5 m/sec^2 for the door drive system
+
+//velocity Parameters in inches/minute
+uint16_t  JOG_SPEED_SLOW_IPM = 25;
+uint16_t  JOG_SPEED_FAST_IPM = 200;
+uint16_t  RUN_SPEED_IPM = 400;
+
+//Derived velocities in pulses/second
+uint16_t cabJogSlow_PPS = (float)JOG_SPEED_SLOW_IPM * cabCountsPerInch / 60;
+uint16_t cabJogFast_PPS = (float)JOG_SPEED_FAST_IPM * cabCountsPerInch / 60;
+uint16_t cabRunSpeed_PPS = (float)RUN_SPEED_IPM * cabCountsPerInch / 60;
+
+uint16_t doorJogSpeed_PPS = (float)JOG_SPEED_FAST_IPM * doorCountsPerInch / 60;
+uint16_t doorRunSpeed_PPS = (float)RUN_SPEED_IPM * doorCountsPerInch / 60;
 
 //General program variables:
 uint32_t flashTime = 0;

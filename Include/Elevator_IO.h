@@ -36,7 +36,7 @@ static CcioPin *jogCabUp = nullptr;		//Input: one of the Cab UP jog buttons is p
 static CcioPin *jogCabDown = nullptr;	//Input: one of the Cab Down jog buttons is pressed
 static CcioPin *jogDoorXUp = nullptr;	//Input: one of the DoorX Up jog buttons is pressed
 static CcioPin *jogDoorXDown = nullptr;	//Input: one of the DoorX Down jog buttons is pressed
-static CcioPin *jogdoorYUp = nullptr;	//Input: one of the DoorY Up jog buttons is pressed
+static CcioPin *jogDoorYUp = nullptr;	//Input: one of the DoorY Up jog buttons is pressed
 static CcioPin *jogDoorYDown = nullptr;	//Input: one of the DoorY Down jog buttons is pressed
 static CcioPin *jog2Hand = nullptr;		//Input: one of the 2nd-hand buttons is pressed
 //static CcioPin *??? = nullptr;		//Spare I/O
@@ -132,7 +132,7 @@ inline void InitializeElevatorIO() {
 	jogCabDown = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB1);
 	jogDoorXUp = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB2);
 	jogDoorXDown = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB3);
-	jogdoorYUp = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB4);
+	jogDoorYUp = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB4);
 	jogDoorYDown = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB5);
 	jog2Hand = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB6);
 //	??? = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB7);
@@ -206,7 +206,7 @@ inline void InitializeElevatorIO() {
 	if (jogCabDown) jogCabDown->Mode(Connector::INPUT_DIGITAL);
 	if (jogDoorXUp) jogDoorXUp->Mode(Connector::INPUT_DIGITAL);
 	if (jogDoorXDown) jogDoorXDown->Mode(Connector::INPUT_DIGITAL);
-	if (jogdoorYUp) jogdoorYUp->Mode(Connector::INPUT_DIGITAL);
+	if (jogDoorYUp) jogDoorYUp->Mode(Connector::INPUT_DIGITAL);
 	if (jogDoorYDown) jogDoorYDown->Mode(Connector::INPUT_DIGITAL);
 	if (jog2Hand) jog2Hand->Mode(Connector::INPUT_DIGITAL);
 //	if (???) ???->Mode(Connector::INPUT_DIGITAL);
