@@ -38,6 +38,9 @@ void HandleJogMode();
 void HandleMotion(Floor* target);
 
 int main(void) {
+	ConnectorLed.State(true);
+	Delay_ms(5000);
+	ConnectorLed.State(false);
 	
 	//	Here is where the ClearCore hardware is initialized
 	
@@ -69,7 +72,7 @@ int main(void) {
 //	Main loop	
     while (1)
     {
-		//HandleJogMode();
+		HandleJogMode();
 		
 //		input_pin->State();				How to read hardware inputs
 //		output_pin->State(<logic>);		How to write to hardware outputs
@@ -85,13 +88,14 @@ SerialPort.SendLine(buffer);
 			
 			
 			flashTime = Milliseconds();
-			faultState.State(ledState);
-			liftEnable.State(!ledState);
+			//faultState.State(ledState);
+			//liftEnable.State(!ledState);
 			ConnectorLed.State(ledState);
 			ledState = !ledState;
 			
 			char buffer[128];
-			snprintf(buffer, sizeof(buffer),"As float: %lu   As Int: %lu", cabCountsPerInch, cabCountsPerInch );
+			//snprintf(buffer, sizeof(buffer),"As float: %lu   As Int: %lu", cabCountsPerInch, cabCountsPerInch );
+			snprintf(buffer, sizeof(buffer),"cabJogSlow: %lu   cabJogFast: %lu", cabJogSlow_PPS, cabJogFast_PPS );
 			SerialPort.SendLine(buffer);
 		}
     }
@@ -165,6 +169,14 @@ bool MotorSetup(){
     doorXMotor.AccelMax(doorAcceleration_PPSS);
 	doorYMotor.AccelMax(doorAcceleration_PPSS);
 	
+	XYEnable->State(true);		//temporary door drive power override
+	
+	cabMotor.EnableRequest(true);
+	doorXMotor.EnableRequest(true);
+	doorYMotor.EnableRequest(true);
+	Delay_ms(1000);
+	StopAllMotors();
+	Delay_ms(1000);
 	return(true);
 }
 
@@ -175,9 +187,9 @@ bool StopAllMotors(){
 	doorXMotor.MoveVelocity(0);
 	doorYMotor.MoveVelocity(0);
 	
-	cabMotor.EnableRequest(false);
-	doorXMotor.EnableRequest(false);
-	doorYMotor.EnableRequest(false);
+	//cabMotor.EnableRequest(false);
+	//doorXMotor.EnableRequest(false);
+	//doorYMotor.EnableRequest(false);
 	return(true);
 }
 
@@ -190,7 +202,9 @@ void HandleJogMode() {
 	if(!jog2Hand->State()){
 		StopAllMotors();
 		return;
-	}
+	}/*else{
+		SerialPort.SendLine("Dead-man button pressed");
+	}*/
 
 	// 2. Read Combined Home/Limit Sensors
 	//bool cabAtHomeLimit = ReadPin(CAB_HOME_SENSE);   // The -0.25" bottom stop
@@ -203,17 +217,26 @@ void HandleJogMode() {
 	bool cabInApartmentZone = cabAt2->State();
 
 	// 3. Cab Jog Logic
-	double cabVel = 0;
-	if (jogCabUp->State() && !cabOvertravel.State()) {
+	//double cabVel = 0;
+	int32_t cabVel = 0;
+	char buffer[128];
+	if (jogCabUp->State() && !jogCabDown->State() && !cabOvertravel.State()) {
 		cabVel = cabInApartmentZone ? cabJogSlow_PPS : cabJogFast_PPS;
+		//cabVel = 1000;
+		//SerialPort.SendLine("Cab up pressed");
 	}
-	else if (jogCabDown->State() && !cabAtHomeLimit) {
+	else if (jogCabDown->State() && !jogCabUp->State() && !cabAtHomeLimit) {
 		cabVel = cabInBasementZone ? -cabJogSlow_PPS : -cabJogFast_PPS;
+		//cabVel = -1000;
 	}
 	cabMotor.MoveVelocity(cabVel);
-
+	
+	//char buffer[128];
+	//snprintf(buffer, sizeof(buffer),"Cab moving at : %ld pulses per second",cabVel );
+	//SerialPort.SendLine(buffer);
+/*
 	// 4. Door X Jog (Cannot go below home)
-	double dxVel = 0;
+	double dxVel = 0;		
 	if (jogDoorXUp->State() && !jogDoorXDown->State()) dxVel = doorJogSpeed_PPS;
 	else if (jogDoorXDown->State() && jogDoorXUp->State() && !dxAtHomeLimit) dxVel = -doorJogSpeed_PPS;
 	doorXMotor.MoveVelocity(dxVel);
@@ -223,5 +246,6 @@ void HandleJogMode() {
 	if (jogDoorYUp->State() && jogDoorYDown->State()) dyVel = doorJogSpeed_PPS;
 	else if ((jogDoorYDown->State() && !jogDoorYUp->State()) && !dyAtHomeLimit) dyVel = -doorJogSpeed_PPS;
 	doorYMotor.MoveVelocity(dyVel);
-	return;
+*/
+	//return;
 }
