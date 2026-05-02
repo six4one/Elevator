@@ -28,7 +28,7 @@ static CcioPin *call1_PB = nullptr;		//Input one of the call buttons for Main le
 static CcioPin *call2_PB = nullptr;		//Input one of the call buttons for Main level is pressed
 static CcioPin *cabStop_PB = nullptr;	//Input the stop button on the cab console is pressed (provisional)
 static CcioPin *jogMode = nullptr;		//Input: key switch in the cab control cabinet is in "Jog" position
-//static CcioPin *??? = nullptr;		//Spare I/O
+static CcioPin *chainDownLimit = nullptr;	//Input: PX to limit how far down the hoist chains can go / hight of the counterweight
 //static CcioPin *??? = nullptr;		//Spare I/O
 
 //	CCIO-8 EXPANSION BOARD ALIASES (2 of 8) ---
@@ -125,7 +125,7 @@ inline void InitializeElevatorIO() {
 	call2_PB = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOA3);
 	cabStop_PB = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOA4);
 	jogMode = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOA5);
-//	??? = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOA6);
+	chainDownLimit = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOA6);
 //	??? = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOA7);
 	
 	jogCabUp = CcioMgr.PinByIndex(CLEARCORE_PIN_CCIOB0);

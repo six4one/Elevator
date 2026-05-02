@@ -1,5 +1,26 @@
-//I just added this to test GIT
-//added @ 1:49 2026-04/24 to test GIT
+//Created 1:49 2026-04/24 by Fausto Zecca
+/*
+This software is intended for the control of a bespoke elevator system based on the ClearCore processing unit from Teknic
+
+The design features a cab and 2 independent doors which translate in the vertical direction. The ClearCore controller treats
+these as separate axes each controlled by a separate servo motor. The synchronization of the relative motion of these is
+governed by this software.
+
+header files:
+	"Elevator_IO.h"		where the hardware I/O are enumerated, and instantiated
+	
+	"Elevator_Params.h"	where the parametric variables constraining the motion, positions, velocities, and acceleration
+						of the cab and doors are listed, converted, and/or derived.
+
+Included in the control scheme is hard-wired interlock circuitry to only permit cab motion when both doors are closed. There
+are three exceptions to this:
+	1.	DoorY is in its home position
+	2.	DoorX is in its home position
+	3.	The elevator control is in Maintenance / Jog mode whereby a technician has local, manual control over the 3 axes
+
+	
+*/
+
 
 #include "ClearCore.h"
 #include "Include\Elevator_Params.h"
@@ -16,10 +37,10 @@
 #define doorYMotor ConnectorM2
 
 Floor floors[] = {
-	{"Basement",  4.0,       DOOR_X, UP,   true},
-	{"Garage",    81.4375,   DOOR_Y, UP,   true},
-	{"Main",      120.3125,  DOOR_X, DOWN, false},
-	{"Apartment", 230.375,   DOOR_Y, DOWN, false}
+	{"Basement",  basementLevel_I,	DOOR_X, UP,   true},
+	{"Garage",    garageLevel_I,	DOOR_Y, UP,   true},
+	{"Main",      mainLevel_I,		DOOR_X, DOWN, false},
+	{"Apartment", apartmentLevel_I,	DOOR_Y, DOWN, false}
 };
 
 /*
@@ -44,20 +65,23 @@ int main(void) {
 	
 	//	Here is where the ClearCore hardware is initialized
 	
-	if(serialSetup()){		//initialize the serial communication over USB for debugging
+	//initialize the serial communication over USB for debugging
+	if(serialSetup()){		
 		SerialPort.SendLine("Serial communication over USB enabled");
 	}
 	else{
 		SerialPort.SendLine("Serial communication over USB setup failed");
 	}
 	
-	if(CCIO_Setup()){			//initialize the CCIO-8 communication bus
+	//initialize the CCIO-8 communication bus
+	if(CCIO_Setup()){			
 		SerialPort.SendLine("CCIO-8 expansion modules communication bus is on-line");
 	}
 	else{
 		SerialPort.SendLine("CCIO-8 expansion modules communication bus failed to start properly");
 	}
 	
+	//Setup the motors:
 	if(MotorSetup()){
 		SerialPort.SendLine("Motors have been defined and setup");
 	}
@@ -206,9 +230,10 @@ void HandleJogMode() {
 		SerialPort.SendLine("Dead-man button pressed");
 	}*/
 
-	// 2. Read Combined Home/Limit Sensors
-	//bool cabAtHomeLimit = ReadPin(CAB_HOME_SENSE);   // The -0.25" bottom stop
+	//	Read Combined Home/Limit Sensors
 	bool cabAtHomeLimit = cabHome.State();
+	bool cabUpLimit = cabOvertravel.State();
+	bool cabDownLimit = chainDownLimit->State();
 	bool dxAtHomeLimit  = doorXHome.State(); // Basement level stop
 	bool dyAtHomeLimit  = doorYHome.State(); // Garage level stop
 	
@@ -220,12 +245,12 @@ void HandleJogMode() {
 	//double cabVel = 0;
 	int32_t cabVel = 0;
 	char buffer[128];
-	if (jogCabUp->State() && !jogCabDown->State() && !cabOvertravel.State()) {
+	if (jogCabUp->State() && !jogCabDown->State() && !cabUpLimit) {
 		cabVel = cabInApartmentZone ? cabJogSlow_PPS : cabJogFast_PPS;
 		//cabVel = 1000;
 		//SerialPort.SendLine("Cab up pressed");
 	}
-	else if (jogCabDown->State() && !jogCabUp->State() && !cabAtHomeLimit) {
+	else if (jogCabDown->State() && !jogCabUp->State() && !cabDownLimit) {
 		cabVel = cabInBasementZone ? -cabJogSlow_PPS : -cabJogFast_PPS;
 		//cabVel = -1000;
 	}
