@@ -37,10 +37,10 @@ are three exceptions to this:
 #define doorYMotor ConnectorM2
 
 Floor floors[] = {
-	{"Basement",  basementLevel_I,	DOOR_X, UP,   true},
-	{"Garage",    garageLevel_I,	DOOR_Y, UP,   true},
-	{"Main",      mainLevel_I,		DOOR_X, DOWN, false},
-	{"Apartment", apartmentLevel_I,	DOOR_Y, DOWN, false}
+	{"Apartment", cabAt2_C,	DOOR_Y, DOWN, false},
+	{"Main",      cabAt1_C,	DOOR_X, DOWN, false},
+	{"Garage",    cabAtG_C,	DOOR_Y, UP,   true},
+	{"Basement",  cabAtB_C,	DOOR_X, UP,   true}
 };
 
 /*

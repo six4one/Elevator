@@ -9,15 +9,6 @@
 #ifndef ELEVATOR_PARAMS_H_
 #define ELEVATOR_PARAMS_H_
 
-//Building structure parameters:
-//float cabOnBottom =	0;					//baseline reference when cab is resting on bottom, measured from floor surface
-/*
-float cabHomeInches = 0;				//offset from bottom to cab home height in inches
-float basementLevelInches =	4;			//offset from home to basement level in inches
-float garageLevelInches = 81.4375;		//offset from home to garage level in inches
-float mainLevelInches = 120.3125;		//offset from home to main level in inches
-float apartmentLevelInches = 230.375;	//offset from home to apartment level in inches
-*/
 enum DoorDirection { UP, DOWN };
 enum DoorID { DOOR_X, DOOR_Y };
 	
@@ -32,8 +23,6 @@ struct Floor {
 // Extern tells the compiler the array is defined elsewhere (in the .cpp)
 extern Floor floors[4];
 
-
-
 //Building structure parameters used in struct Floor
 const float apartmentLevel_I = 230.375;	//offset from home to apartment level in inches
 const float mainLevel_I = 120.3125;		//offset from home to main level in inches
@@ -47,7 +36,7 @@ const float cabYHeight_I = 84;		//cab interior floor-to-ceiling distance on Y-si
 const float doorXHeight_I = 90.125;	//height of the X-side door
 const float doorYHeight_I = 90.125;	//height of the Y-side door
 const float doorCloseOffset_I = -4.25;	//distance bottom edge of door (X or Y) must be offset from the cab floor to close the interlock circuitry
-const float doorApproachOffset_I = 0.25;	//distance from the door (X @ basement, or Y @ garage) home position where the cab and doors synchronize while traveling to or from the garage or basement levels
+const float doorApproachOffset_I = 0.25;	//distance from the door (X @ basement, or Y @ garage) home position where the cab and doors synchronize as the relevant door goes in or out of the parked position
 
 //Mechanical system parameters:
 
