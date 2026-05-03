@@ -8,6 +8,7 @@
 
 #ifndef ELEVATOR_PARAMS_H_
 #define ELEVATOR_PARAMS_H_
+#include "ClearCore.h"
 
 enum DoorDirection { UP, DOWN };
 enum DoorID { DOOR_X, DOOR_Y };
@@ -41,63 +42,51 @@ const float doorApproachOffset_I = 0.25;	//distance from the door (X @ basement,
 //Mechanical system parameters:
 
 //velocity Parameters in inches/minute
-const float deratingFactor = 0.1;				//1 = 100%		Factor to throttle the elevator's performance during debugging
-const uint16_t  RUN_SPEED_IPM = 420;			//100%			designed top operating speed
-const uint16_t  JOG_SPEED_SLOW_IPM = (float)RUN_SPEED_IPM*0.2;		//20%
-const uint16_t  JOG_SPEED_FAST_IPM = (float)RUN_SPEED_IPM*0.5;		//50%
+const float deratingFactor = 1;				//1 = 100%		Factor to throttle the elevator's performance during debugging
+const uint32_t  RUN_SPEED_IPM = 420;			//100%			designed top operating speed
+const uint32_t  JOG_SPEED_SLOW_IPM = (float)RUN_SPEED_IPM*0.1;		//20%
+const uint32_t  JOG_SPEED_FAST_IPM = (float)RUN_SPEED_IPM*0.5;		//50%
 
 //acceleration parameter in inches/second^2
-const float acceleration_IPSS = 58;	//design acceleration in inches/second^2 where any greater value might affect passenger comfort.
+const float acceleration_IPSS = 6;	//design acceleration in inches/second^2 where any greater value might affect passenger comfort.
 
 //Main hoist motor:	ClearPath P/N: CPM-SDHPN1433P-ELN
-const uint16_t cabCountsPerRev = 32000;			//encoder counts per revolution for M0
-const uint16_t cabGearRatio = 60;					//gear-down ratio of main hoist gearbox
+const uint32_t cabCountsPerRev = 1000;			//encoder counts per revolution for M0
+const uint32_t cabGearRatio = 60;					//gear-down ratio of main hoist gearbox
 const float cabChainPitch = 0.75;					//main hoist chain pitch in inches
-const uint16_t cabDriveTeeth = 22;				//number of teeth on the hoist output drive sprockets
-const float32_t cabCountsPerInch = (float)cabCountsPerRev * cabGearRatio / cabChainPitch / cabDriveTeeth;	//116,363.3636
+const uint32_t cabDriveTeeth = 22;				//number of teeth on the hoist output drive sprockets
+const float cabCountsPerInch = (float)cabCountsPerRev * cabGearRatio / cabChainPitch / cabDriveTeeth;	//29090.9090
 
-const uint32_t cabAt2_C = apartmentLevel_I * cabCountsPerInch;	//# of counts for M0 from cab home to apartment level
-const uint32_t cabAt1_C = mainLevel_I * cabCountsPerInch;		//# of counts for M0 from cab home to main level
-const uint32_t cabAtG_C = garageLevel_I * cabCountsPerInch;		//# of counts for M0 from cab home to garage level
-const uint32_t cabAtB_C = basementLevel_I * cabCountsPerInch;	//# of counts for M0 from cab home to basement level
+//Derived cab velocities in pulses/second
+const uint32_t cabVelocityLimit_PPS = (float)RUN_SPEED_IPM * cabCountsPerInch * 1.02 / 60 * deratingFactor;	//conversion to counts/second plus 2%
+const uint32_t cabJogSlow_PPS = (float)JOG_SPEED_SLOW_IPM * cabCountsPerInch / 60 * deratingFactor;
+const uint32_t cabJogFast_PPS = (float)JOG_SPEED_FAST_IPM * cabCountsPerInch / 60 * deratingFactor;
+const uint32_t cabRunSpeed_PPS = (float)RUN_SPEED_IPM * cabCountsPerInch / 60 * deratingFactor;
 
-const uint32_t cabVelocityLimit_PPS = (float)RUN_SPEED_IPM * cabCountsPerInch * 1.02 / 60;	//conversion to counts/second plus 2%
-//const uint32_t cabAcceleration_PPSS = 6400000;	//Equivalent to 58 inches/sec^2 or 1.5 m/sec^2 for the door drive system
+//Derived door accelerations in pulses/second^2
+const uint32_t cabAccelerationLimit_PPSS = (float)acceleration_IPSS * cabCountsPerInch * 1.02;
 const uint32_t cabAcceleration_PPSS = (float)acceleration_IPSS * cabCountsPerInch;
 
-
 //Door drive motors:	ClearPath P/N: CPM-SDSK-3421S-RLN
-const uint16_t doorCountsPerRev = 800;			//encoder counts per revolution for M1, M2
-const uint16_t doorGearRatio = 10;				//gear-down ratio of door motor gearboxes
+const uint32_t doorCountsPerRev = 1000;			//encoder counts per revolution for M1, M2
+const uint32_t doorGearRatio = 10;				//gear-down ratio of door motor gearboxes
 const float doorChainPitch = 0.5;					//door drive chain pitch in inches
-const uint16_t doorDriveTeeth = 17;				//number of teeth on the door output drive sprockets
-const float32_t doorCountsPerInch = (float)doorCountsPerRev * doorGearRatio / doorChainPitch/ doorDriveTeeth ;	//941.1765
+const uint32_t doorDriveTeeth = 17;				//number of teeth on the door output drive sprockets
+const float doorCountsPerInch = (float)doorCountsPerRev * doorGearRatio / doorChainPitch/ doorDriveTeeth ;	//941.1765
 
-// #todo Need to understand how the HSM is going to handle door open/close logic befor treating these properly
-const uint32_t doorAt2_C = apartmentLevel_I * doorCountsPerInch;
-const uint32_t doorAt1_C = apartmentLevel_I * doorCountsPerInch;
-const uint32_t doorAtG_C = apartmentLevel_I * doorCountsPerInch;
-const uint32_t doorAtB_C = apartmentLevel_I * doorCountsPerInch;
+//Derived cab velocities in pulses/second
+const uint32_t doorVelocityLimit_PPS = (float)RUN_SPEED_IPM * doorCountsPerInch * 1.02 / 60 * deratingFactor;
+const uint32_t doorJogSpeed_PPS = (float)JOG_SPEED_FAST_IPM * doorCountsPerInch / 60 *deratingFactor;
+const uint32_t doorRunSpeed_PPS = (float)RUN_SPEED_IPM * doorCountsPerInch / 60 * deratingFactor;
 
-const uint32_t doorVelocityLimit_PPS = 500;		//Slightly more than 400 IPM for the door motor, gearbox, and sprocket
-const uint32_t doorAcceleration_PPSS = 1100;		//Equivalent to 58 inches/sec^2 or 1.5 m/sec^2 for the door drive system
+//Derived door accelerations in pulses/second^2
+const uint32_t doorAccelerationLimit_PPSS = (float)acceleration_IPSS * doorCountsPerInch * 1.02;
+const uint32_t doorAcceleration_PPSS = (float)acceleration_IPSS * doorCountsPerInch;
 
-
-
-
-
-//Derived velocities in pulses/second
-const uint32_t cabJogSlow_PPS = (float)JOG_SPEED_SLOW_IPM * cabCountsPerInch / 60;
-//const uint32_t cabJogSlow_PPS = 5000;		//24000;
-// uint16_t cabJogFast_PPS = (float)JOG_SPEED_FAST_IPM * cabCountsPerInch / 60;
-const uint32_t cabJogFast_PPS = 25000;		//120000;
-// uint16_t cabRunSpeed_PPS = (float)RUN_SPEED_IPM * cabCountsPerInch / 60;
-const uint32_t cabRunSpeed_PPS = 50000;		//240000;
-
-// uint16_t doorJogSpeed_PPS = (float)JOG_SPEED_FAST_IPM * doorCountsPerInch / 60;
-const uint16_t doorJogSpeed_PPS = 100;
-// uint16_t doorRunSpeed_PPS = (float)RUN_SPEED_IPM * doorCountsPerInch / 60;
-const uint16_t doorRunSpeed_PPS = 500;
+const uint32_t cabAt2_C = (float)apartmentLevel_I * cabCountsPerInch;	//# of counts for M0 from cab home to apartment level
+const uint32_t cabAt1_C = (float)mainLevel_I * cabCountsPerInch;		//# of counts for M0 from cab home to main level
+const uint32_t cabAtG_C = (float)garageLevel_I * cabCountsPerInch;		//# of counts for M0 from cab home to garage level
+const uint32_t cabAtB_C = (float)basementLevel_I * cabCountsPerInch;	//# of counts for M0 from cab home to basement level
 
 //General program variables:
 uint32_t flashTime = 0;

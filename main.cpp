@@ -50,17 +50,20 @@ Floor floors[] = {
 
 
 
-//	Functions are declared here
+//	Helper functions are declared here
 bool serialSetup();
 bool CCIO_Setup();
 bool MotorSetup();
 bool StopAllMotors();
 void HandleJogMode();
 void HandleMotion(Floor* target);
+bool MoveCabAtVelocity(int32_t velocity);
+bool MoveXAtVelocity(int32_t velocity);
+bool MoveYAtVelocity(int32_t velocity);
 
 int main(void) {
 	ConnectorLed.State(true);
-	Delay_ms(5000);
+	Delay_ms(1000);
 	ConnectorLed.State(false);
 	
 	//	Here is where the ClearCore hardware is initialized
@@ -112,14 +115,11 @@ SerialPort.SendLine(buffer);
 			
 			
 			flashTime = Milliseconds();
-			//faultState.State(ledState);
-			//liftEnable.State(!ledState);
 			ConnectorLed.State(ledState);
 			ledState = !ledState;
 			
 			char buffer[128];
-			//snprintf(buffer, sizeof(buffer),"As float: %lu   As Int: %lu", cabCountsPerInch, cabCountsPerInch );
-			snprintf(buffer, sizeof(buffer),"cabJogSlow: %lu   cabJogFast: %lu", cabJogSlow_PPS, cabJogFast_PPS );
+			snprintf(buffer, sizeof(buffer),"cabJogSlow: %lu   cabJogFast: %lu   cabVelocityLimit: %lu", cabJogSlow_PPS, cabJogFast_PPS, cabVelocityLimit_PPS );
 			SerialPort.SendLine(buffer);
 		}
     }
@@ -175,13 +175,13 @@ bool MotorSetup(){
     // Put the motor connectors into the HLFB mode to read bipolar PWM (the
     // correct mode for ASG w/ Measured Torque)
     cabMotor.HlfbMode(MotorDriver::HLFB_MODE_HAS_BIPOLAR_PWM);
-    doorXMotor.HlfbMode(MotorDriver::HLFB_MODE_HAS_BIPOLAR_PWM);
-	doorYMotor.HlfbMode(MotorDriver::HLFB_MODE_HAS_BIPOLAR_PWM);
+    //doorXMotor.HlfbMode(MotorDriver::HLFB_MODE_HAS_BIPOLAR_PWM);
+	//doorYMotor.HlfbMode(MotorDriver::HLFB_MODE_HAS_BIPOLAR_PWM);
     
     // Set the HFLB carrier frequencies to 482 Hz
     cabMotor.HlfbCarrier(MotorDriver::HLFB_CARRIER_482_HZ);
-    doorXMotor.HlfbCarrier(MotorDriver::HLFB_CARRIER_482_HZ);
-	doorYMotor.HlfbCarrier(MotorDriver::HLFB_CARRIER_482_HZ);
+    //doorXMotor.HlfbCarrier(MotorDriver::HLFB_CARRIER_482_HZ);
+	//doorYMotor.HlfbCarrier(MotorDriver::HLFB_CARRIER_482_HZ);
     
     // Sets the maximum velocity for each move.
     cabMotor.VelMax(cabVelocityLimit_PPS);
@@ -198,13 +198,51 @@ bool MotorSetup(){
 	cabMotor.EnableRequest(true);
 	doorXMotor.EnableRequest(true);
 	doorYMotor.EnableRequest(true);
-	Delay_ms(1000);
-	StopAllMotors();
-	Delay_ms(1000);
+    SerialPort.SendLine("Motor Enabled");
+    
+    // Waits for HLFB to assert (waits for homing to complete if applicable)
+    SerialPort.SendLine("Waiting for HLFB...");
+    while (cabMotor.HlfbState() != MotorDriver::HLFB_ASSERTED &&
+    !cabMotor.StatusReg().bit.AlertsPresent) {
+	    continue;
+    }
+    // Check if motor alert occurred during enabling
+    // Clear alert if configured to do so
+    if (cabMotor.StatusReg().bit.AlertsPresent) {
+	    SerialPort.SendLine("Motor alert detected.");
+	    //PrintAlerts();
+/*
+	    if(HANDLE_ALERTS){
+		    HandleAlerts();
+		} else {
+		    SerialPort.SendLine("Enable automatic alert handling by setting HANDLE_ALERTS to 1.");
+	    }
+*/
+	    SerialPort.SendLine("Enabling may not have completed as expected. Proceed with caution.");
+	    SerialPort.SendLine();
+	} else {
+	    SerialPort.SendLine("Motor Ready");
+    }
 	return(true);
 }
 
-
+void PrintAlerts(){
+	// report status of alerts
+	SerialPort.SendLine("Alerts present: ");
+	if(cabMotor.AlertReg().bit.MotionCanceledInAlert){
+	SerialPort.SendLine("    MotionCanceledInAlert "); }
+	if(cabMotor.AlertReg().bit.MotionCanceledPositiveLimit){
+	SerialPort.SendLine("    MotionCanceledPositiveLimit "); }
+	if(cabMotor.AlertReg().bit.MotionCanceledNegativeLimit){
+	SerialPort.SendLine("    MotionCanceledNegativeLimit "); }
+	if(cabMotor.AlertReg().bit.MotionCanceledSensorEStop){
+	SerialPort.SendLine("    MotionCanceledSensorEStop "); }
+	if(cabMotor.AlertReg().bit.MotionCanceledMotorDisabled){
+	SerialPort.SendLine("    MotionCanceledMotorDisabled "); }
+	if(cabMotor.AlertReg().bit.MotorFaulted){
+		SerialPort.SendLine("    MotorFaulted ");
+	}
+}
 // Define the logic here
 bool StopAllMotors(){
 	cabMotor.MoveVelocity(0);
@@ -226,12 +264,13 @@ void HandleJogMode() {
 	if(!jog2Hand->State()){
 		StopAllMotors();
 		return;
-	}/*else{
+
+	}else if(jog2Hand->InputRisen()){
 		SerialPort.SendLine("Dead-man button pressed");
-	}*/
+	}
 
 	//	Read Combined Home/Limit Sensors
-	bool cabAtHomeLimit = cabHome.State();
+	//bool cabAtHomeLimit = cabHome.State();
 	bool cabUpLimit = cabOvertravel.State();
 	bool cabDownLimit = chainDownLimit->State();
 	bool dxAtHomeLimit  = doorXHome.State(); // Basement level stop
@@ -242,35 +281,197 @@ void HandleJogMode() {
 	bool cabInApartmentZone = cabAt2->State();
 
 	// 3. Cab Jog Logic
-	//double cabVel = 0;
 	int32_t cabVel = 0;
-	char buffer[128];
 	if (jogCabUp->State() && !jogCabDown->State() && !cabUpLimit) {
 		cabVel = cabInApartmentZone ? cabJogSlow_PPS : cabJogFast_PPS;
-		//cabVel = 1000;
-		//SerialPort.SendLine("Cab up pressed");
+		SerialPort.SendLine("Cab up pressed");
 	}
 	else if (jogCabDown->State() && !jogCabUp->State() && !cabDownLimit) {
 		cabVel = cabInBasementZone ? -cabJogSlow_PPS : -cabJogFast_PPS;
-		//cabVel = -1000;
+		SerialPort.SendLine("Cab down pressed");
 	}
-	cabMotor.MoveVelocity(cabVel);
+
+	//MoveCabAtVelocity(cabVel);
 	
-	//char buffer[128];
-	//snprintf(buffer, sizeof(buffer),"Cab moving at : %ld pulses per second",cabVel );
-	//SerialPort.SendLine(buffer);
-/*
+
 	// 4. Door X Jog (Cannot go below home)
-	double dxVel = 0;		
-	if (jogDoorXUp->State() && !jogDoorXDown->State()) dxVel = doorJogSpeed_PPS;
-	else if (jogDoorXDown->State() && jogDoorXUp->State() && !dxAtHomeLimit) dxVel = -doorJogSpeed_PPS;
-	doorXMotor.MoveVelocity(dxVel);
+	int32_t dxVel = 0;		
+	if (jogDoorXUp->State() && !jogDoorXDown->State()){
+		dxVel = doorJogSpeed_PPS;
+	}
+	else if (jogDoorXDown->State() && !jogDoorXUp->State() && !dxAtHomeLimit){
+		dxVel = -doorJogSpeed_PPS;
+	}
+	//MoveXAtVelocity(-dxVel);
 
 	// 5. Door Y Jog (Cannot go below home)
-	double dyVel = 0;
-	if (jogDoorYUp->State() && jogDoorYDown->State()) dyVel = doorJogSpeed_PPS;
-	else if ((jogDoorYDown->State() && !jogDoorYUp->State()) && !dyAtHomeLimit) dyVel = -doorJogSpeed_PPS;
-	doorYMotor.MoveVelocity(dyVel);
+	int32_t dyVel = 0;
+	if (jogDoorYUp->State() && !jogDoorYDown->State()){
+		dyVel = doorJogSpeed_PPS;
+	}
+	else if (jogDoorYDown->State() && !jogDoorYUp->State() && !dyAtHomeLimit){
+		dyVel = -doorJogSpeed_PPS;
+	}
+	//MoveYAtVelocity(-dyVel);
+	
+	cabMotor.MoveVelocity(cabVel);
+	doorXMotor.MoveVelocity(-dxVel);
+	doorYMotor.MoveVelocity(-dyVel);
+	return;
+	
+}
+bool MoveCabAtVelocity(int32_t velocity) {
+	// Check if a motor alert is currently preventing motion
+	// Clear alert if configured to do so
+	if (cabMotor.StatusReg().bit.AlertsPresent) {
+		SerialPort.SendLine("Motor alert detected.");
+		PrintAlerts();
+/*
+		if(HANDLE_ALERTS){
+			HandleAlerts();
+			} else {
+			SerialPort.SendLine("Enable automatic alert handling by setting HANDLE_ALERTS to 1.");
+		}
 */
-	//return;
+		SerialPort.SendLine("Move canceled.");
+		SerialPort.SendLine();
+		return false;
+	}
+	
+	SerialPort.Send("Commanding velocity: ");
+	SerialPort.SendLine(velocity);
+	
+	// Command the velocity move
+	cabMotor.MoveVelocity(velocity);
+	
+	// Waits for the step command to ramp up/down to the commanded velocity.
+	// This time will depend on your Acceleration Limit.
+	SerialPort.Send("Ramping to speed...");
+	SerialPort.SendLine (velocity);
+	while (!cabMotor.StatusReg().bit.AtTargetVelocity && jog2Hand->State()) {
+		continue;
+	}
+	// Check if motor alert occurred during move
+	// Clear alert if configured to do so
+	if (cabMotor.StatusReg().bit.AlertsPresent) {
+		SerialPort.SendLine("Motor alert detected.");
+		PrintAlerts();
+/*
+		if(HANDLE_ALERTS){
+			HandleAlerts();
+			} else {
+			SerialPort.SendLine("Enable automatic fault handling by setting HANDLE_ALERTS to 1.");
+		}
+*/
+		SerialPort.SendLine("Motion may not have completed as expected. Proceed with caution.");
+		SerialPort.SendLine();
+		return false;
+		} else {
+		SerialPort.SendLine("Move Done");
+		return true;
+	}
+}
+
+bool MoveXAtVelocity(int32_t velocity) {
+	// Check if a motor alert is currently preventing motion
+	// Clear alert if configured to do so
+	if (doorXMotor.StatusReg().bit.AlertsPresent) {
+		SerialPort.SendLine("Motor alert detected.");
+		PrintAlerts();
+/*
+		if(HANDLE_ALERTS){
+			HandleAlerts();
+			} else {
+			SerialPort.SendLine("Enable automatic alert handling by setting HANDLE_ALERTS to 1.");
+		}
+*/
+		SerialPort.SendLine("Move canceled.");
+		SerialPort.SendLine();
+		return false;
+	}
+	
+	SerialPort.Send("Commanding velocity: ");
+	SerialPort.SendLine(velocity);
+	
+	// Command the velocity move
+	doorXMotor.MoveVelocity(velocity);
+	
+	// Waits for the step command to ramp up/down to the commanded velocity.
+	// This time will depend on your Acceleration Limit.
+	SerialPort.Send("Ramping to speed...");
+	SerialPort.SendLine (velocity);
+	while (!doorXMotor.StatusReg().bit.AtTargetVelocity && jog2Hand->State()) {
+		continue;
+	}
+	// Check if motor alert occurred during move
+	// Clear alert if configured to do so
+	if (doorXMotor.StatusReg().bit.AlertsPresent) {
+		SerialPort.SendLine("Motor alert detected.");
+		PrintAlerts();
+/*
+		if(HANDLE_ALERTS){
+			HandleAlerts();
+			} else {
+			SerialPort.SendLine("Enable automatic fault handling by setting HANDLE_ALERTS to 1.");
+		}
+*/
+		SerialPort.SendLine("Motion may not have completed as expected. Proceed with caution.");
+		SerialPort.SendLine();
+		return false;
+		} else {
+		SerialPort.SendLine("Move Done");
+		return true;
+	}
+}
+
+bool MoveYAtVelocity(int32_t velocity) {
+	// Check if a motor alert is currently preventing motion
+	// Clear alert if configured to do so
+	if (doorYMotor.StatusReg().bit.AlertsPresent) {
+		SerialPort.SendLine("Motor alert detected.");
+		PrintAlerts();
+/*
+		if(HANDLE_ALERTS){
+			HandleAlerts();
+			} else {
+			SerialPort.SendLine("Enable automatic alert handling by setting HANDLE_ALERTS to 1.");
+		}
+*/
+		SerialPort.SendLine("Move canceled.");
+		SerialPort.SendLine();
+		return false;
+	}
+	
+	SerialPort.Send("Commanding velocity: ");
+	SerialPort.SendLine(velocity);
+	
+	// Command the velocity move
+	doorYMotor.MoveVelocity(velocity);
+	
+	// Waits for the step command to ramp up/down to the commanded velocity.
+	// This time will depend on your Acceleration Limit.
+	SerialPort.Send("Ramping to speed...");
+	SerialPort.SendLine (velocity);
+	while (!doorYMotor.StatusReg().bit.AtTargetVelocity && jog2Hand->State()) {
+		continue;
+	}
+	// Check if motor alert occurred during move
+	// Clear alert if configured to do so
+	if (doorYMotor.StatusReg().bit.AlertsPresent) {
+		SerialPort.SendLine("Motor alert detected.");
+		PrintAlerts();
+/*
+		if(HANDLE_ALERTS){
+			HandleAlerts();
+			} else {
+			SerialPort.SendLine("Enable automatic fault handling by setting HANDLE_ALERTS to 1.");
+		}
+*/
+		SerialPort.SendLine("Motion may not have completed as expected. Proceed with caution.");
+		SerialPort.SendLine();
+		return false;
+		} else {
+		SerialPort.SendLine("Move Done");
+		return true;
+	}
 }
