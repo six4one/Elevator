@@ -195,9 +195,13 @@ bool MotorSetup(){
 	
 	XYEnable->State(true);		//temporary door drive power override
 	
+	doorXMotor.PolarityInvertSDDirection(true);	//invert the direction of the door X servo
+	doorYMotor.PolarityInvertSDDirection(true);	//invert the direction of the door Y servo
+	
 	cabMotor.EnableRequest(true);
 	doorXMotor.EnableRequest(true);
 	doorYMotor.EnableRequest(true);
+	
     SerialPort.SendLine("Motor Enabled");
     
     // Waits for HLFB to assert (waits for homing to complete if applicable)
@@ -282,23 +286,24 @@ void HandleJogMode() {
 
 	// 3. Cab Jog Logic
 	int32_t cabVel = 0;
+	//cab up
 	if (jogCabUp->State() && !jogCabDown->State() && !cabUpLimit) {
 		cabVel = cabInApartmentZone ? cabJogSlow_PPS : cabJogFast_PPS;
 		SerialPort.SendLine("Cab up pressed");
 	}
+	//cab down
 	else if (jogCabDown->State() && !jogCabUp->State() && !cabDownLimit) {
 		cabVel = cabInBasementZone ? -cabJogSlow_PPS : -cabJogFast_PPS;
 		SerialPort.SendLine("Cab down pressed");
 	}
 
-	//MoveCabAtVelocity(cabVel);
-	
-
 	// 4. Door X Jog (Cannot go below home)
-	int32_t dxVel = 0;		
+	int32_t dxVel = 0;
+	//door X up
 	if (jogDoorXUp->State() && !jogDoorXDown->State()){
 		dxVel = doorJogSpeed_PPS;
 	}
+	//door X down
 	else if (jogDoorXDown->State() && !jogDoorXUp->State() && !dxAtHomeLimit){
 		dxVel = -doorJogSpeed_PPS;
 	}
@@ -306,17 +311,18 @@ void HandleJogMode() {
 
 	// 5. Door Y Jog (Cannot go below home)
 	int32_t dyVel = 0;
+	//door Y up
 	if (jogDoorYUp->State() && !jogDoorYDown->State()){
 		dyVel = doorJogSpeed_PPS;
 	}
+	//door Y down
 	else if (jogDoorYDown->State() && !jogDoorYUp->State() && !dyAtHomeLimit){
 		dyVel = -doorJogSpeed_PPS;
 	}
-	//MoveYAtVelocity(-dyVel);
 	
 	cabMotor.MoveVelocity(cabVel);
-	doorXMotor.MoveVelocity(-dxVel);
-	doorYMotor.MoveVelocity(-dyVel);
+	doorXMotor.MoveVelocity(dxVel);
+	doorYMotor.MoveVelocity(dyVel);
 	return;
 	
 }
@@ -329,7 +335,7 @@ bool MoveCabAtVelocity(int32_t velocity) {
 /*
 		if(HANDLE_ALERTS){
 			HandleAlerts();
-			} else {
+		} else {
 			SerialPort.SendLine("Enable automatic alert handling by setting HANDLE_ALERTS to 1.");
 		}
 */
