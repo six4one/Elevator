@@ -252,6 +252,7 @@ bool StopAllMotors(){
 	cabMotor.MoveVelocity(0);
 	doorXMotor.MoveVelocity(0);
 	doorYMotor.MoveVelocity(0);
+	//beeper->State(false);
 	
 	//cabMotor.EnableRequest(false);
 	//doorXMotor.EnableRequest(false);
@@ -267,6 +268,7 @@ void HandleJogMode() {
 	// 1. Dead-man Gate (Must be held for any motion)
 	if(!jog2Hand->State()){
 		StopAllMotors();
+		beeper->State(false);
 		return;
 
 	}else if(jog2Hand->InputRisen()){
@@ -319,7 +321,7 @@ void HandleJogMode() {
 	else if (jogDoorYDown->State() && !jogDoorYUp->State() && !dyAtHomeLimit){
 		dyVel = -doorJogSpeed_PPS;
 	}
-	
+	beeper->State(true);
 	cabMotor.MoveVelocity(cabVel);
 	doorXMotor.MoveVelocity(dxVel);
 	doorYMotor.MoveVelocity(dyVel);
